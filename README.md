@@ -395,7 +395,8 @@ DEFINITION
 
 ```
 We shall add another variable called app_count which will hold the number of tasks that we want for our service
-#variables.tf   (updated with app_count)
+### variables.tf   (updated with app_count)
+```
 variable "region" {
   type = string
 }
@@ -416,7 +417,7 @@ app_count = 2
 
 
 
-#service.tf
+### service.tf
 Let’s create a service that will launch our tasks using the task definition. Here we shall define our networking and load balancer 
 
 resource "aws_ecs_service" "devopsuncut_sv" {
@@ -439,20 +440,23 @@ resource "aws_ecs_service" "devopsuncut_sv" {
 
   depends_on = [aws_lb_listener.https_forward]
 }
-
+```
 
 Let’s go on to create our infrastructure and view it in our browser using the load balancers dns name.
 The load balancer will balance traffic between our 2 or more tasks which are instances ofour web page.
 
 Run the following commands
+```
 terraform init
  terraform validate
 terraform plan
 terraform apply -auto-approve	
+```
+Our output will print out out load balancers dns name. Copy this and run in your browser window.
 
-# Our output will print out out load balancers dns name. Copy this and run in your browser window.
 Look in your terminal for the output and copy the loadbalancer dns name.
-# We shall be able to view our website through the load balancers dns name.
+
+We shall be able to view our website through the load balancers dns name.
 
 -----------YOU HAVE COMPLETED THE TASK HERE------------
 
@@ -465,6 +469,7 @@ The changes may also take as much as 48 hours to propagate.
 Please be aware that you may incure substantial costs if your infrastructure is running in AWS for this amount of time.
 
 We shall create a route 53 zone and then a route53 A record to forward traffic to our load balancer.
+```
 # route53.tf
 resource "aws_route53_zone" "nollywood" {
   name = "nollywoodauditions.com"
@@ -481,14 +486,15 @@ resource "aws_route53_record" "www" {
     evaluate_target_health = true
   }
 }
-
+```
 
 Run the following commands
+```
 terraform init
  terraform validate
 terraform plan
 terraform apply -auto-approve	
-
+```
 ### Go back to the browser and visit http://nollywoodauditions.com
 
 We should see our web page in the browser.
