@@ -36,9 +36,10 @@ Access our application using the Load Balancer DNS name
 
 
 
-#provider.tf
+### provider.tf
 
-# Configure the AWS Provider
+### Configure the AWS Provider
+```
 provider "aws" {
   region = var.region
 }
@@ -60,9 +61,10 @@ terraform {
     encrypt        = true
   }
 }
+```
 
-
-#variables.tf
+### variables.tf
+```
 variable "region" {
   type = string
 }
@@ -72,17 +74,20 @@ variable "subnet_count" {
 variable "vpc_cidr" {
   type = string
 }
-}
+```
 
 
-#terraform.tfvars
+### terraform.tfvars
+```
 region = "us-east-1"
 subnet_count = 2
 vpc_cidr = "10.0.0.0/16"
 
+```
+### security.tf
 
-#security.tf
 We shall create a security group for our load balancer to allow port 80 traffic and one for our tasks to allow port 80 traffic traffic from the load balancer security group.
+```
 resource "aws_security_group" "lb2" {
   name        = "lb-sg2"
   vpc_id      = aws_vpc.main.id
@@ -122,21 +127,23 @@ resource "aws_security_group" "ecs_tasks2" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+```
 
 
 
-
-#networking.tf
-# Next, we shall set up the networking
+### networking.tf
+### Next, we shall set up the networking
 We shall create A VPC, 2 public subnets and 2 private subnets in 2 availability zones for high availability and fault tolerance.
 Our plan is to create our public facing load balancer in the public subnet and our ECS cluster in the private subnet.
 
-# Declare the availability zone data source
+### Declare the availability zone data source
+```
 data "aws_availability_zones" "available" {
   state = "available"
 }
-
+```
 ### Create the VPC
+```
 resource "aws_vpc" "main" {
   cidr_block       = var.vpc_cidr
   instance_tenancy = "default"
@@ -145,13 +152,14 @@ resource "aws_vpc" "main" {
     Name = "main_vpc"
   }
 }
-
-# public subnet
+```
+### public subnet
 We use the count meta argument to dynamically generate the number of subnets that we need.
 2 in this case so we shall set var.subnet_count = 3 in our tfvars file.
 
-### Create the public subnet
 
+```
+### Create the public subnet
 resource "aws_subnet" "public" {
   count = var.subnet_count  
   vpc_id     = aws_vpc.main.id
@@ -181,8 +189,9 @@ resource "aws_route_table" "rtb-public" {
     Name = "Public-RT"
   }
 }
+```
 We use the count meta argument to dynamically retrieve the id’s of our public subnet that were dynamically generated.
-
+```
 resource "aws_route" "rtb-public-route" {
   route_table_id         = aws_route_table.rtb-public.id
   destination_cidr_block = "0.0.0.0/0"
@@ -252,14 +261,14 @@ resource "aws_route_table_association" "priv-rtb-asoc" {
 }
 
 
+```
 
-
-#load_balancer.tf
+### load_balancer.tf
 Now that the Networking is complete, we can now begin with creating our Application Load Balancer, listener and Target Group.
 
 The listener will forward http traffic to the registered target group.
 We shall create it in the public subnets and its security group will allow traffic from port 80.
-
+```
 resource "aws_lb" "cluster_lb" {
   name               = "cluster-alb"
   subnets            = aws_subnet.public[*].id
@@ -301,7 +310,7 @@ resource "aws_lb_target_group" "ecs-fargate-TG" {
 }
 
 
-#output.tf
+### output.tf
 Let’s output the load balancers dns name for use later on
 output "load_balancer_ip" {
   value = aws_lb.cluster_lb.dns_name
@@ -309,7 +318,7 @@ output "load_balancer_ip" {
 
 
 
-#iam_role.tf
+### iam_role.tf
 Now, we shall create the iam roles needed by our tasks.	
 We shall use a datasource to retrieve the policy which will be attached to our role.
 
@@ -339,7 +348,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
 
 
 
-#cluster.tf 
+### cluster.tf 
 Let’s create our ECS Cluster first and the task definition after.
 resource "aws_ecs_cluster" "devopsuncut-ecs-cluster" {
   name = "devopsuncut-ecs-cluster"
@@ -352,10 +361,12 @@ resource "aws_ecs_cluster" "devopsuncut-ecs-cluster" {
 
 
 
-#tasks.tf
+### tasks.tf
 Please note that we already have a docker image that we created in dockerhub called:
  deleonabowu/devops-uncut-webpage:latest"
+
 Feel free to use this or use your own image from your repository. 
+
 resource "aws_ecs_task_definition" "devopsuncut_td" {
   family                   = "devops-uncut-webpage"
   network_mode             = "awsvpc"
@@ -382,7 +393,7 @@ resource "aws_ecs_task_definition" "devopsuncut_td" {
 DEFINITION
 }
 
-
+```
 We shall add another variable called app_count which will hold the number of tasks that we want for our service
 #variables.tf   (updated with app_count)
 variable "region" {
